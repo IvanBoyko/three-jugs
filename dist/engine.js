@@ -19,19 +19,21 @@ function search(cap,start){
 }
 function path(node){if(!node)return null;const moves=[];while(node.parent){moves.push(node.move);node=node.parent;}return moves.reverse();}
 function solve(cap,start,target){return path(search(cap,start).get(target));}
-function generate(previous=null,random=Math.random){
+const levels=Object.freeze({easy:Object.freeze({min:2,max:3,low:5,high:10}),medium:Object.freeze({min:5,max:7,low:10,high:20}),hard:Object.freeze({min:8,max:15,low:10,high:30})});
+function generate(previous=null,random=Math.random,difficulty='easy'){
+ const {min,max,low,high}=levels[difficulty]||levels.easy;
  const pick=(lo,hi)=>lo+Math.floor(random()*(hi-lo+1));
  for(let i=0;i<600;i++){
-  const a=pick(10,30),b=pick(Math.ceil(a/2),a-1),c=pick(2,b-1);const cap=[a,b,c],start=[a,0,0];
-  const goals=[...search(cap,start)].filter(([target,node])=>target>0&&target<a&&node.depth>=5&&node.depth<=15&&(!previous||previous.cap.join()!==cap.join()));
+  const a=pick(low,high),b=pick(Math.ceil(a/2),a-1),c=pick(2,b-1);const cap=[a,b,c],start=[a,0,0];
+  const goals=[...search(cap,start)].filter(([target,node])=>target>0&&target<a&&node.depth>=min&&node.depth<=max&&(!previous||previous.cap.join()!==cap.join()));
   if(goals.length){const [target,node]=goals[pick(0,goals.length-1)];return {cap,start,target,minimum:node.depth};}
  }
  // Deterministic fallback still computed and validated by BFS.
- for(let a=10;a<=30;a++)for(let b=Math.ceil(a/2);b<a;b++)for(let c=2;c<b;c++){
+ for(let a=low;a<=high;a++)for(let b=Math.ceil(a/2);b<a;b++)for(let c=2;c<b;c++){
   const cap=[a,b,c],start=[a,0,0];if(previous&&previous.cap.join()===cap.join())continue;
-  for(const [target,node] of search(cap,start))if(target>0&&target<a&&node.depth>=5&&node.depth<=15)return {cap,start,target,minimum:node.depth};
+  for(const [target,node] of search(cap,start))if(target>0&&target<a&&node.depth>=min&&node.depth<=max)return {cap,start,target,minimum:node.depth};
  }
  throw Error('No puzzle found');
 }
-const api={pour,search,solve,generate};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.Jugs=api;
+const api={pour,search,solve,generate,levels};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.Jugs=api;
 })(globalThis);
